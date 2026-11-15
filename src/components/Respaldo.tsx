@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShareNetwork, Copy, Check, DownloadSimple, ArrowCounterClockwise, FileText, CaretLeft, WarningCircle } from '@phosphor-icons/react';
+import { DeviceMobile, ShareNetwork, Copy, Check, DownloadSimple, ArrowCounterClockwise, FileText, CaretLeft, WarningCircle } from '@phosphor-icons/react';
 import { CharacterProfile, SavedProgress } from '../types';
 import { crearCodigo, leerCodigo, nombreArchivo, Recuperado } from '../data/respaldo';
 import { dice } from '../data/voces';
@@ -23,6 +23,7 @@ export function Respaldo({
   onCerrar,
   onGuardado,
   onRecuperar,
+  onInstalar,
 }: {
   abierta: boolean;
   inicial?: Paso;
@@ -32,6 +33,7 @@ export function Respaldo({
   onCerrar: () => void;
   onGuardado: () => void;
   onRecuperar: (avance: Partial<SavedProgress>) => void;
+  onInstalar?: () => void;
 }) {
   const [paso, setPaso] = useState<Paso>(inicial);
   const [codigo, setCodigo] = useState('');
@@ -169,6 +171,11 @@ export function Respaldo({
               <Respuesta onClick={() => setPaso('recuperar')} icono={<ArrowCounterClockwise size={18} />}>
                 Recuperar mi avance
               </Respuesta>
+              {onInstalar && (
+                <Respuesta onClick={onInstalar} icono={<DeviceMobile size={18} />}>
+                  Instalar la app en el celular
+                </Respuesta>
+              )}
             </div>
             <p className="text-[12px] leading-relaxed text-zinc-500 px-1">
               La copia queda contigo: no se sube a ningún lado. Sirve si cambias de celular, si se borran los datos del navegador o si pasas de abrirla en el navegador a la app instalada.

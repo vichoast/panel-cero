@@ -140,4 +140,6 @@ export interface SavedProgress {
   parejas?: ShipId[];
   // Ya vio la presentación de los personajes.
   presentado?: boolean;
+  // Ya vio la guía para instalar la app en el celular.
+  instalacionVista?: boolean;
 }

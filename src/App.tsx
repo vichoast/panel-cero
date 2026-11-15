@@ -31,6 +31,8 @@ import { activas, bloqueo, disponibles, normalizar, terminada, terminadas, TODAS
 import { PRESENTACION } from './data/presentacion';
 import { Encuentro } from './components/Encuentro';
 import { FinDeHistoria } from './components/FinDeHistoria';
+import { Instalar } from './components/Instalar';
+import { entorno } from './data/instalacion';
 import { Bocadillo, Hoja } from './ui/Bocadillo';
 
 
@@ -94,6 +96,10 @@ export function App() {
   const [encuentro, setEncuentro] = useState<null | 'completo' | 'nueva'>(progress.presentado ? null : 'completo');
   // Pareja cuya historia acaba de terminar (pantalla de despedida).
   const [finalDe, setFinalDe] = useState<ShipId | null>(null);
+  // Guía de instalación: en el celular, si no la abrió desde el ícono y no la ha visto.
+  const [donde] = useState(entorno);
+  const instalable = donde !== 'instalada' && donde !== 'computador';
+  const [verInstalar, setVerInstalar] = useState(instalable && !progress.instalacionVista);
   const [mision, setMision] = useState<MicroMission | null>(null);
   const [leyendo, setLeyendo] = useState<BLChapter | null>(null);
   const [secreto, setSecreto] = useState<SecretLog | null>(null);
@@ -686,7 +692,25 @@ export function App() {
         onCerrar={() => setHojaRespaldo(null)}
         onGuardado={() => setProgress((p) => ({ ...p, ultimoRespaldo: new Date().toISOString() }))}
         onRecuperar={recuperar}
+        onInstalar={
+          instalable
+            ? () => {
+                setHojaRespaldo(null);
+                setVerInstalar(true);
+              }
+            : undefined
+        }
       />
+
+      {verInstalar && (
+        <Instalar
+          primeraVez={!progress.presentado}
+          onSeguir={() => {
+            setVerInstalar(false);
+            setProgress((p) => ({ ...p, instalacionVista: true }));
+          }}
+        />
+      )}
 
       <MissionSheet
         abierta={!!hojaMision}
