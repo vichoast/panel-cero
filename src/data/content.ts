@@ -95,7 +95,7 @@ export const SHIPS: Record<ShipId, ShipMetadata> = {
     title: 'Tinta Bajo la Máscara',
     tropeHeadline: 'Musa Melancólica × Obsesión Teatral',
     synopsis:
-      'Vesper exige perfección absoluta tras su máscara de porcelana, pero pierde la compostura cada vez que las manos manchadas de tinta de Noctis rozan su rostro.',
+      'Vesper dirige una obra desde la cuarta fila y cada mañana clava cuatro correcciones en el telón que pinta Noctis. Nunca cinco. Hasta que un día hay una quinta, y no es sobre la pintura.',
     stageNames: [
       'I. Crítica a Distancia',
       'II. El Pulso Compartido',
@@ -111,7 +111,7 @@ export const SHIPS: Record<ShipId, ShipMetadata> = {
     title: 'Té Caliente a las Cuatro AM',
     tropeHeadline: 'Guardián Tsundere × Artista Insomne',
     synopsis:
-      'Noctis olvida comer, abrigarse y dormir cuando dibuja. Kazuha jura que lo cuida solo porque le molesta el desorden, pero sus orejas de zorro lo delatan cada vez que Noctis le sonríe.',
+      'Noctis deja enfriar once tazas de té al día. Kazuha, guardián de la casa hace doscientos años, jura que se las sigue subiendo por obligación. Sus orejas dicen otra cosa.',
     stageNames: [
       'I. Quejas en el Taller',
       'II. El Haori Prestado',
@@ -159,7 +159,7 @@ export const SHIPS: Record<ShipId, ShipMetadata> = {
     title: 'Orgullo de Porcelana y Fuego',
     tropeHeadline: 'Dos Dominantes que se Niegan a Ceder',
     synopsis:
-      'Ninguno de los dos acepta órdenes del otro. Cuando se quedan encerrados ordenando el estudio, cada roce de guante y garra se convierte en un duelo de tensión pura.',
+      'Vesper arrienda un teatro viejo y lo ordena de a cuatro. El teatro ya tiene guardián, y Kazuha lo desordena por siglo cada noche. Una guerra de cartas cada vez más corteses y más venenosas.',
     stageNames: [
       'I. Territorio Dividido',
       'II. Duelo de Miradas',

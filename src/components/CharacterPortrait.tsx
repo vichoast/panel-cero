@@ -4,7 +4,7 @@ import { CharacterId } from '../types';
 interface CharacterPortraitProps {
   characterId: CharacterId;
   expression?: 'neutral' | 'blush' | 'intense' | 'smirk' | 'look-away' | 'shock';
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'stage';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'stage' | 'fill';
   className?: string;
 }
 
@@ -21,6 +21,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
     xl: 'w-44 h-52',
     xs: 'w-9 h-9',
     stage: 'w-[42vw] max-w-[12.5rem] aspect-[5/6]',
+    fill: 'w-full aspect-[5/6]',
   }[size];
 
   const isBlushing = expression === 'blush' || expression === 'shock';

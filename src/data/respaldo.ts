@@ -21,6 +21,8 @@ interface Compacto {
   h: (string | BLChapter)[];
   c: Record<string, string>;
   f: string; // fecha del respaldo
+  a?: ShipId[]; // historias activas
+  o?: boolean; // ya vio la presentación
 }
 
 const capitulosEscritos = (): Map<string, BLChapter> => {
@@ -60,6 +62,8 @@ export async function crearCodigo(p: SavedProgress): Promise<string> {
     h: p.unlockedChapterHistory.map((c) => (escritos.has(c.id) ? c.id : c)),
     c: p.choicesMade,
     f: new Date().toISOString(),
+    a: p.parejas,
+    o: p.presentado,
   };
   const bytes = new TextEncoder().encode(JSON.stringify(datos));
   if (typeof CompressionStream !== 'undefined') {
@@ -116,6 +120,8 @@ export async function leerCodigo(texto: string): Promise<Recuperado> {
       unlockedChapterHistory: historial,
       choicesMade: d.c,
       ultimoRespaldo: d.f,
+      parejas: d.a,
+      presentado: d.o,
     },
     fecha: new Date(d.f),
     capitulos: Object.values(d.i).reduce((a, b) => a + b, 0),

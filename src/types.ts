@@ -136,4 +136,8 @@ export interface SavedProgress {
   choicesMade: Record<string, string>;
   // Fecha (ISO) del último respaldo que guardó o recuperó.
   ultimoRespaldo?: string;
+  // Historias activas (máx. 2, sin personajes repetidos). Ver src/data/parejas.ts.
+  parejas?: ShipId[];
+  // Ya vio la presentación de los personajes.
+  presentado?: boolean;
 }
