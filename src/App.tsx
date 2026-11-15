@@ -22,7 +22,6 @@ import {
   PencilCircle,
   Lightning,
   Eye,
-  WarningCircle,
   ArrowCounterClockwise,
   CheckCircle,
 } from '@phosphor-icons/react';
@@ -59,6 +58,8 @@ interface SavedProgress {
   shipChemistry: Record<ShipId, number>;
   shipChapterIndex: Record<ShipId, number>;
   unlockedChapterHistory: BLChapter[];
+  // Opción elegida en cada capítulo (id del capítulo -> id de la opción). Evita sumar química dos veces.
+  choicesMade: Record<string, string>;
 }
 
 const DEFAULT_PROGRESS: SavedProgress = {
@@ -84,6 +85,7 @@ const DEFAULT_PROGRESS: SavedProgress = {
     'noctis-renji': 0,
   },
   unlockedChapterHistory: [],
+  choicesMade: {},
 };
 
 export function App() {
@@ -122,9 +124,6 @@ export function App() {
   const [openedSecretLog, setOpenedSecretLog] = useState<SecretLog | null>(null);
   const [selectedCharacterFilter, setSelectedCharacterFilter] = useState<CharacterId | 'all'>('all');
 
-  // Confirmation modal for resetting current ship to switch to another
-  const [pendingSwitchShip, setPendingSwitchShip] = useState<ShipId | null>(null);
-  const [showResetRouteModal, setShowResetRouteModal] = useState(false);
 
   useEffect(() => {
     try {
@@ -137,7 +136,7 @@ export function App() {
   const currentShip = SHIPS[progress.activeShip];
   const charA = CHARACTERS[currentShip.charA];
   const charB = CHARACTERS[currentShip.charB];
-  const currentChem = progress.shipChemistry[progress.activeShip] || 15;
+  const currentChem = Math.min(100, progress.shipChemistry[progress.activeShip] || 15);
   const currentChapIdx = progress.shipChapterIndex[progress.activeShip] || 0;
 
   // Stage index (0 to 4) based on chemistry (0-100+)
@@ -176,33 +175,9 @@ export function App() {
   };
 
   const handleSelectShipCard = (targetShipId: ShipId) => {
+    // Cada pareja guarda su propio avance: cambiar nunca borra nada.
     if (targetShipId === progress.activeShip) return;
-    if (progress.isShipLocked) {
-      // Ask for confirmation to reset current ship progress before switching!
-      setPendingSwitchShip(targetShipId);
-      setShowResetRouteModal(true);
-      return;
-    }
     setProgress((prev) => ({ ...prev, activeShip: targetShipId }));
-  };
-
-  const handleConfirmResetAndSwitchShip = () => {
-    const nextShip = pendingSwitchShip || progress.activeShip;
-    setProgress((prev) => ({
-      ...prev,
-      activeShip: nextShip,
-      // Unlock selector if they clicked the top "Cambiar Pareja / Reiniciar" button without a specific card, or lock into the new one with reset progress
-      isShipLocked: pendingSwitchShip ? true : false,
-      shipChemistry: {
-        ...DEFAULT_PROGRESS.shipChemistry,
-      },
-      shipChapterIndex: {
-        ...DEFAULT_PROGRESS.shipChapterIndex,
-      },
-      unlockedChapterHistory: [],
-    }));
-    setPendingSwitchShip(null);
-    setShowResetRouteModal(false);
   };
 
   const handleCompleteMission = (mission: MicroMission, bonusFlow: boolean) => {
@@ -219,38 +194,45 @@ export function App() {
       mission.domain
     );
 
-    setProgress((prev) => ({
-      ...prev,
-      isShipLocked: true,
-      plumas: prev.plumas + (bonusFlow ? 25 : 15),
-      sessionsCompleted: prev.sessionsCompleted + 1,
-    }));
-
-    setReadingChapter(chapterToUnlock);
-  };
-
-  const handleFinishChapter = (choice: SceneChoice) => {
-    if (!readingChapter) return;
+    // El capítulo queda ganado y guardado apenas termina la misión: aunque cierre
+    // el lector sin elegir, lo encuentra en "Capítulos desbloqueados".
     setProgress((prev) => {
-      const prevChem = prev.shipChemistry[prev.activeShip] || 15;
       const prevIdx = prev.shipChapterIndex[prev.activeShip] || 0;
       const alreadyInHistory = prev.unlockedChapterHistory.some(
-        (c) => c.id === readingChapter.id
+        (c) => c.id === chapterToUnlock.id
       );
       return {
         ...prev,
         isShipLocked: true,
-        shipChemistry: {
-          ...prev.shipChemistry,
-          [prev.activeShip]: prevChem + choice.chemistryDelta,
-        },
+        plumas: prev.plumas + (bonusFlow ? 25 : 15),
+        sessionsCompleted: prev.sessionsCompleted + 1,
         shipChapterIndex: {
           ...prev.shipChapterIndex,
           [prev.activeShip]: alreadyInHistory ? prevIdx : prevIdx + 1,
         },
         unlockedChapterHistory: alreadyInHistory
           ? prev.unlockedChapterHistory
-          : [readingChapter, ...prev.unlockedChapterHistory],
+          : [chapterToUnlock, ...prev.unlockedChapterHistory],
+      };
+    });
+
+    setReadingChapter(chapterToUnlock);
+  };
+
+  const handleFinishChapter = (choice: SceneChoice) => {
+    if (!readingChapter) return;
+    const chapter = readingChapter;
+    setProgress((prev) => {
+      // La química se suma solo la primera vez que elige en ese capítulo (releer no infla la barra).
+      if (prev.choicesMade[chapter.id]) return prev;
+      const prevChem = prev.shipChemistry[chapter.shipId] || 15;
+      return {
+        ...prev,
+        shipChemistry: {
+          ...prev.shipChemistry,
+          [chapter.shipId]: Math.min(100, prevChem + choice.chemistryDelta),
+        },
+        choicesMade: { ...prev.choicesMade, [chapter.id]: choice.id },
       };
     });
     setReadingChapter(null);
@@ -341,7 +323,8 @@ export function App() {
               className="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-rose-300 text-xs font-medium flex items-center gap-1.5 transition active:scale-[0.98]"
             >
               <Shuffle size={15} weight="bold" className="text-rose-400" />
-              <span>¿Sobrepensando el orden?</span>
+              <span className="hidden sm:inline">¿Sobrepensando el orden?</span>
+              <span className="sm:hidden">¿Bloqueada?</span>
             </button>
 
             {/* Plumas counter */}
@@ -354,7 +337,10 @@ export function App() {
               title="Plumas de Tinta ganadas al iniciar bloques de 5 minutos"
             >
               <Sparkle size={14} weight="fill" className="text-rose-400" />
-              <span>{progress.plumas} Plumas</span>
+              <span>
+                {progress.plumas}
+                <span className="hidden sm:inline"> Plumas</span>
+              </span>
             </div>
 
             {/* Theme toggle */}
@@ -418,7 +404,7 @@ export function App() {
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono-tech uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30">
                       <LockKey size={12} weight="fill" />
-                      Ruta BL Fijada
+                      Historia de hoy
                     </span>
                     <span className="text-xs font-mono-tech text-zinc-400">
                       Episodio {currentChapIdx + 1} en curso
@@ -434,10 +420,7 @@ export function App() {
               </div>
 
               <button
-                onClick={() => {
-                  setPendingSwitchShip(null);
-                  setShowResetRouteModal(true);
-                }}
+                onClick={() => setProgress((prev) => ({ ...prev, isShipLocked: false }))}
                 className={`px-3.5 py-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition shrink-0 ${
                   isInkNight
                     ? 'bg-zinc-950 hover:bg-zinc-800 border-white/10 text-zinc-400 hover:text-rose-300'
@@ -445,7 +428,7 @@ export function App() {
                 }`}
               >
                 <ArrowCounterClockwise size={15} />
-                <span>Reiniciar historia para cambiar de Ship</span>
+                <span>Cambiar de pareja (no se pierde nada)</span>
               </button>
             </div>
           ) : (
@@ -454,13 +437,13 @@ export function App() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div>
                   <span className="text-xs font-mono-tech uppercase tracking-wider text-rose-400">
-                    Paso Inicial — Elige tu Ruta BL (Se bloqueará al comenzar)
+                    Elige la pareja de hoy
                   </span>
                   <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
                     ¿Qué pareja quieres seguir en esta historia?
                   </h1>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Una vez que inicies tu primera misión o fijes la pareja, quedarás comprometida con su historia (para cambiar a otro ship tendrás que reiniciar desde el Episodio 1).
+                    Cada pareja guarda su propio avance. Puedes cambiar cuando quieras y retomar las otras donde las dejaste.
                   </p>
                 </div>
 
@@ -573,12 +556,12 @@ export function App() {
                           }}
                           className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold flex items-center gap-1 shrink-0 transition"
                         >
-                          <LockKey size={13} weight="fill" />
-                          Fijar Ship
+                          <Play size={13} weight="fill" />
+                          Seguir
                         </button>
                       ) : (
                         <span className="text-xs font-mono-tech text-zinc-500 shrink-0">
-                          Ver
+                          Ep. {(progress.shipChapterIndex[ship.id] || 0) + 1}
                         </span>
                       )}
                     </div>
@@ -740,10 +723,9 @@ export function App() {
                       <BookOpenText size={15} />
                       Capítulos Desbloqueados de {charA.name} × {charB.name}:
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1">
                       {progress.unlockedChapterHistory
                         .filter((c) => c.shipId === progress.activeShip)
-                        .slice(0, 4)
                         .map((chap) => (
                           <button
                             key={chap.id}
@@ -1112,16 +1094,21 @@ export function App() {
                         <button
                           disabled={!canAfford}
                           onClick={() => {
-                            setProgress((prev) => ({
-                              ...prev,
-                              isShipLocked: true,
-                              plumas: prev.plumas - card.costPlumas,
-                            }));
                             const customChap = card.customSceneGenerator(
                               charA,
                               charB,
                               activeDomain
                             );
+                            // El especial se guarda al pagarlo y NO avanza la historia principal.
+                            setProgress((prev) => ({
+                              ...prev,
+                              isShipLocked: true,
+                              plumas: prev.plumas - card.costPlumas,
+                              unlockedChapterHistory: [
+                                customChap,
+                                ...prev.unlockedChapterHistory,
+                              ],
+                            }));
                             setReadingChapter(customChap);
                           }}
                           className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
@@ -1164,7 +1151,12 @@ export function App() {
                 </div>
 
                 <div className="space-y-3">
-                  {(currentShipSecretLogs.length > 0 ? currentShipSecretLogs : SECRET_LOGS).map(
+                  {currentShipSecretLogs.length === 0 && (
+                    <p className="text-xs text-zinc-400 italic p-4 rounded-2xl border border-dashed border-white/15">
+                      {charA.name} y {charB.name} todavía esconden bien sus secretos. Sus chats y cuadernos llegarán en una próxima temporada.
+                    </p>
+                  )}
+                  {currentShipSecretLogs.map(
                     (log) => {
                       const isUnlocked =
                         progress.sessionsCompleted >= log.unlockRequirementSessions;
@@ -1274,57 +1266,6 @@ export function App() {
           </div>
         </div>
       </main>
-
-      {/* RESET SHIP ROUTE CONFIRMATION MODAL */}
-      <AnimatePresence>
-        {showResetRouteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/85 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-md rounded-3xl bg-zinc-900 border border-rose-500/30 p-6 space-y-5 text-zinc-100 shadow-2xl"
-            >
-              <div className="flex items-center gap-3 text-rose-400">
-                <WarningCircle size={28} weight="fill" />
-                <h3 className="text-lg font-bold text-white">
-                  ¿Reiniciar ruta para cambiar de Ship?
-                </h3>
-              </div>
-
-              <p className="text-sm text-zinc-300 leading-relaxed">
-                Actualmente estás vinculada a la historia de{' '}
-                <strong className="text-white">
-                  {charA.name} × {charB.name}
-                </strong>{' '}
-                (Episodio {currentChapIdx + 1}, {currentChem}% de Química).
-              </p>
-              <p className="text-xs text-rose-200/90 bg-rose-950/40 border border-rose-500/30 p-3.5 rounded-xl leading-relaxed">
-                En <strong>Panel Cero</strong> solo puedes vivir un Ship a la vez. Si decides cambiar de pareja ahora, el progreso de capítulos y química de tu ruta actual se reiniciará desde cero.
-              </p>
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  onClick={() => {
-                    setPendingSwitchShip(null);
-                    setShowResetRouteModal(false);
-                  }}
-                  className="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 transition"
-                >
-                  Seguir con {charA.name} × {charB.name}
-                </button>
-                <button
-                  onClick={handleConfirmResetAndSwitchShip}
-                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white flex items-center gap-1.5 transition"
-                >
-                  <ArrowCounterClockwise size={15} />
-                  Sí, reiniciar ruta y cambiar
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* MODALS */}
       <OverthinkingModal

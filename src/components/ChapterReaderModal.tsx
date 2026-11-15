@@ -64,8 +64,8 @@ export const ChapterReaderModal: React.FC<ChapterReaderModalProps> = ({
           className="relative w-full max-w-3xl max-h-[90dvh] flex flex-col rounded-3xl bg-zinc-900 border border-white/15 shadow-2xl overflow-hidden text-zinc-100"
         >
           {/* Top Bar */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-zinc-950/80 shrink-0">
-            <div>
+          <div className="flex items-start justify-between gap-3 px-4 sm:px-6 py-4 border-b border-white/10 bg-zinc-950/80 shrink-0">
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-mono-tech uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
                   {chapter.tropeTag}
@@ -86,7 +86,8 @@ export const ChapterReaderModal: React.FC<ChapterReaderModalProps> = ({
                 title="Revelar lo que están pensando en secreto"
               >
                 <Eye size={15} weight="duotone" />
-                Revelar pensamientos ocultos
+                <span className="hidden sm:inline">Revelar pensamientos ocultos</span>
+                <span className="sm:hidden">Pensamientos</span>
               </button>
               <button
                 onClick={onClose}
@@ -98,7 +99,7 @@ export const ChapterReaderModal: React.FC<ChapterReaderModalProps> = ({
           </div>
 
           {/* Scrollable Webtoon / Visual Novel Panels */}
-          <div className="p-6 md:p-8 space-y-5 overflow-y-auto bg-halftone-dark flex-1">
+          <div className="p-4 sm:p-6 md:p-8 space-y-5 overflow-y-auto bg-halftone-dark flex-1">
             <p className="text-sm text-zinc-400 italic border-l-2 border-rose-500/40 pl-3">
               {chapter.subtitle} — Toca cualquier cuadro con el ícono de ojo para leer lo que el personaje calla por dentro.
             </p>

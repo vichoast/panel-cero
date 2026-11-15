@@ -704,13 +704,14 @@ export function getOrGenerateChapter(
   const charA = CHARACTERS[ship.charA];
   const charB = CHARACTERS[ship.charB];
   const epNum = chapterIndex + 1;
+  const epLabel = String(epNum).padStart(2, "0");
 
   const isPieza = domain === 'pieza';
 
   const scenarios = [
     {
-      titlePieza: `Episodio 0${epNum}: Atrapados Entre Cajas y Ropa a Medianoche`,
-      titleUni: `Episodio 0${epNum}: Audífonos Compartidos en la Entrega Nocturna`,
+      titlePieza: `Episodio ${epLabel}: Atrapados Entre Cajas y Ropa a Medianoche`,
+      titleUni: `Episodio ${epLabel}: Audífonos Compartidos en la Entrega Nocturna`,
       tropePieza: 'Proximidad Forzada en la Pieza',
       tropeUni: 'Desvelo en el Estudio',
       lineA: isPieza
@@ -721,20 +722,20 @@ export function getOrGenerateChapter(
         : `Si me sigues mirando así en vez de mirar el monitor, no vamos a terminar nunca.`,
     },
     {
-      titlePieza: `Episodio 0${epNum}: La Prenda Equivocada y el Silencio en la Cama`,
-      titleUni: `Episodio 0${epNum}: Mano sobre Mano en la Tableta Gráfica`,
+      titlePieza: `Episodio ${epLabel}: La Prenda Equivocada y el Silencio en la Cama`,
+      titleUni: `Episodio ${epLabel}: Mano sobre Mano en la Tableta Gráfica`,
       tropePieza: 'Tensión Doméstica',
       tropeUni: 'Pulso Compartido a las 3 AM',
       lineA: isPieza
         ? `Oye... esa camisa que tienes en la mano es mía, ${charB.name}. ¿Desde cuándo la tenías tú?`
-        : `Tu mano está temblando por el cansancio, ${charA.name}. Déjame sostenerte la muñeca para este trazo.`,
+        : `Tu mano está temblando por el cansancio, ${charB.name}. Déjame sostenerte la muñeca para este trazo.`,
       lineB: isPieza
         ? `No preguntes cosas cuya respuesta te va a hacer sonrojar hasta las orejas.`
         : `Si me agarras la mano por detrás así, ¿cómo esperas que mire la línea de tiempo?`,
     },
     {
-      titlePieza: `Episodio 0${epNum}: Lluvia Afuera y Una Sola Manta Limpia`,
-      titleUni: `Episodio 0${epNum}: Renderizando a Oscuras en el Mismo Sillón`,
+      titlePieza: `Episodio ${epLabel}: Lluvia Afuera y Una Sola Manta Limpia`,
+      titleUni: `Episodio ${epLabel}: Renderizando a Oscuras en el Mismo Sillón`,
       tropePieza: 'Tormenta y Refugio',
       tropeUni: 'Confesión Mientras Renderiza',
       lineA: isPieza
@@ -854,7 +855,7 @@ export function getOrGenerateChapter(
         ],
       },
     ],
-    nextCliffhangerTeaser: `En el Episodio 0${epNum + 1} de ${ship.title}: la tensión sube al siguiente nivel cuando quedan a solas después de medianoche.`,
+    nextCliffhangerTeaser: `En el Episodio ${String(epNum + 1).padStart(2, "0")} de ${ship.title}: la tensión sube al siguiente nivel cuando quedan a solas después de medianoche.`,
   };
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play,
@@ -67,36 +67,158 @@ export const ActiveTimerModal: React.FC<ActiveTimerModalProps> = ({
   const [banterIndex, setBanterIndex] = useState(0);
   const [streamIndex, setStreamIndex] = useState(0);
   const [isFlowExtension, setIsFlowExtension] = useState(false);
+  const [totalSeconds, setTotalSeconds] = useState(300);
+
+  // El reloj se calcula contra la hora real de término (no contando ticks), así no
+  // se atrasa si el navegador duerme la pestaña o ella cambia de app.
+  const endAtRef = useRef(0);
+  const alarmFiredRef = useRef(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     if (mission) {
-      setSecondsLeft(mission.durationMinutes * 60);
+      const total = mission.durationMinutes * 60;
+      endAtRef.current = Date.now() + total * 1000;
+      alarmFiredRef.current = false;
+      setSecondsLeft(total);
+      setTotalSeconds(total);
       setIsRunning(true);
       setBanterIndex(0);
       setIsFlowExtension(false);
+      // Se prepara el audio ahora (ella acaba de tocar "Iniciar") para que la campana pueda sonar al final.
+      try {
+        const Ctx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (Ctx && !audioCtxRef.current) audioCtxRef.current = new Ctx();
+        audioCtxRef.current?.resume().catch(() => {});
+      } catch {
+        // sin audio disponible: el aviso será solo visual y por vibración
+      }
     }
   }, [mission]);
 
+  const ringAlarm = () => {
+    try {
+      const ctx = audioCtxRef.current;
+      if (ctx) {
+        ctx.resume().catch(() => {});
+        // Campanita de tres notas ascendentes, repetida dos veces.
+        [0, 0.22, 0.44, 1.1, 1.32, 1.54].forEach((offset, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = [659.25, 783.99, 1046.5][i % 3];
+          const t = ctx.currentTime + offset;
+          gain.gain.setValueAtTime(0.0001, t);
+          gain.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.65);
+        });
+      }
+    } catch {
+      // ignorar errores de audio
+    }
+    try {
+      navigator.vibrate?.([250, 120, 250, 120, 400]);
+    } catch {
+      // vibración no disponible
+    }
+  };
+
   useEffect(() => {
     if (!mission || !isRunning) return;
-    const interval = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
+    const tick = () => {
+      const left = Math.max(0, Math.round((endAtRef.current - Date.now()) / 1000));
+      setSecondsLeft(left);
+      if (left === 0 && !alarmFiredRef.current) {
+        alarmFiredRef.current = true;
+        ringAlarm();
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 500);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', tick);
+    };
   }, [mission, isRunning]);
 
+  // Mantiene la pantalla encendida mientras corre el reloj (si el teléfono lo permite),
+  // para que la campana suene aunque ella esté ordenando y no toque el celular.
+  useEffect(() => {
+    if (!mission || !isRunning) return;
+    type Lock = { release: () => Promise<void> };
+    let lock: Lock | null = null;
+    let cancelled = false;
+    const request = async () => {
+      try {
+        const wl = (navigator as unknown as {
+          wakeLock?: { request: (t: 'screen') => Promise<Lock> };
+        }).wakeLock;
+        if (!wl || document.visibilityState !== 'visible') return;
+        const l = await wl.request('screen');
+        if (cancelled) l.release().catch(() => {});
+        else lock = l;
+      } catch {
+        // el sistema lo negó (batería baja, etc.)
+      }
+    };
+    request();
+    document.addEventListener('visibilitychange', request);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', request);
+      lock?.release().catch(() => {});
+    };
+  }, [mission, isRunning]);
+
+  // Mientras trabaja, el título de la pestaña muestra el tiempo.
+  useEffect(() => {
+    if (!mission) return;
+    const original = document.title;
+    return () => {
+      document.title = original;
+    };
+  }, [mission]);
+  useEffect(() => {
+    if (!mission) return;
+    const m = Math.floor(secondsLeft / 60);
+    const s = String(secondsLeft % 60).padStart(2, '0');
+    document.title = secondsLeft === 0 ? '¡Tiempo! — Panel Cero' : `${m}:${s} — Panel Cero`;
+  }, [mission, secondsLeft]);
+
+  const togglePause = () => {
+    if (isRunning) {
+      setIsRunning(false);
+    } else {
+      endAtRef.current = Date.now() + secondsLeft * 1000;
+      setIsRunning(true);
+    }
+  };
+
+  const addFlowTime = () => {
+    setIsFlowExtension(true);
+    alarmFiredRef.current = false;
+    setTotalSeconds((t) => t + 600);
+    if (isRunning) {
+      endAtRef.current = Math.max(endAtRef.current, Date.now()) + 600_000;
+      setSecondsLeft(Math.round((endAtRef.current - Date.now()) / 1000));
+    } else {
+      setSecondsLeft((s) => s + 600);
+    }
+  };
+
+  // Los diálogos rotan lento (cada 40 s) para acompañar sin distraerla de la tarea.
   useEffect(() => {
     if (!mission || !isRunning) return;
     const banterTimer = setInterval(() => {
       setBanterIndex((prev) => (prev + 1) % 5);
       setStreamIndex((prev) => (prev + 1) % STREAM_HYPE_MESSAGES.length);
-    }, 7000);
+    }, 40000);
     return () => clearInterval(banterTimer);
   }, [mission, isRunning]);
 
@@ -108,7 +230,6 @@ export const ActiveTimerModal: React.FC<ActiveTimerModalProps> = ({
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;
   const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  const totalSeconds = (isFlowExtension ? 10 : mission.durationMinutes) * 60;
   const progressPct = Math.min(
     100,
     Math.max(0, ((totalSeconds - secondsLeft) / totalSeconds) * 100)
@@ -181,17 +302,14 @@ export const ActiveTimerModal: React.FC<ActiveTimerModalProps> = ({
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <button
-                    onClick={() => setIsRunning((r) => !r)}
+                    onClick={togglePause}
                     className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 flex items-center gap-1.5 transition"
                   >
                     {isRunning ? <Pause size={14} weight="fill" /> : <Play size={14} weight="fill" />}
                     {isRunning ? 'Pausar' : 'Reanudar'}
                   </button>
                   <button
-                    onClick={() => {
-                      setIsFlowExtension(true);
-                      setSecondsLeft((s) => s + 600);
-                    }}
+                    onClick={addFlowTime}
                     className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-xs font-medium text-rose-300 transition"
                     title="Si ya agarraste vuelo y quieres aprovechar que estás concentrada"
                   >
