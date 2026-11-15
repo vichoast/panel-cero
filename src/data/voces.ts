@@ -30,7 +30,11 @@ export type Clave =
   | 'secretoBloqueado'
   | 'cartasIntro'
   | 'sinPlumas'
-  | 'parejaIntro';
+  | 'parejaIntro'
+  | 'respaldoIntro'
+  | 'respaldoGuardado'
+  | 'respaldoRecuperado'
+  | 'respaldoRecordar';
 
 type Voz = Record<Clave, string[]>;
 
@@ -78,6 +82,10 @@ const VOCES: Record<CharacterId, Voz> = {
     cartasIntro: ['Con tus Plumas puedes obligarnos a vivir una escena. Abusas de ese poder, lo sé.'],
     sinPlumas: ['Te faltan Plumas. Un bloque de cinco minutos y vuelves.'],
     parejaIntro: ['¿Quieres ver otra historia? Ve. Aquí te guardo el lugar.'],
+    respaldoIntro: ['Tu avance vive solo en este celular. Si se borra, se borra todo, y no pienso volver a explicarte el capítulo uno. Guarda una copia. Ahora.'],
+    respaldoGuardado: ['Listo. Guárdalo donde no lo pierdas. En tu chat contigo misma, por ejemplo. No en el desorden de tu galería.'],
+    respaldoRecuperado: ['Ya estás aquí otra vez, con todo en su lugar. …No me había preocupado. Nada.'],
+    respaldoRecordar: ['Hace tiempo que no guardas una copia de tu avance. Hazlo. No es una sugerencia.'],
   },
 
   renji: {
@@ -121,6 +129,10 @@ const VOCES: Record<CharacterId, Voz> = {
     cartasIntro: ['Tienes poder de directora. Paga Plumas y nos metes en un tropo. Sé cruel.'],
     sinPlumas: ['Sin Plumas, sin escena. Un bloque de cinco y vuelves rica.'],
     parejaIntro: ['¿Me vas a cambiar por otra historia? Bueno. Aquí te espero. Con leche.'],
+    respaldoIntro: ['Directora, dato técnico: todo lo que vivimos está guardado solo en este teléfono. Si se cae al inodoro, nos vamos con él. Haz un respaldo, por si acaso.'],
+    respaldoGuardado: ['Respaldo hecho. Mándatelo por WhatsApp a ti misma, que ahí nada se pierde. Bueno, casi nada.'],
+    respaldoRecuperado: ['¡Volviste con todo! Capítulos, Plumas, decisiones. Como si nada. Mejor que un guardado de PlayStation.'],
+    respaldoRecordar: ['Oye, hace rato que no respaldas. No quiero perder la temporada por un celular mojado.'],
   },
 
   noctis: {
@@ -154,6 +166,10 @@ const VOCES: Record<CharacterId, Voz> = {
     cartasIntro: ['Con tus Plumas puedes pintarnos una escena distinta. Elige con cariño.'],
     sinPlumas: ['Te faltan Plumas. Cinco minutos más y la tenemos.'],
     parejaIntro: ['¿Otra historia? Ve tranquila. Aquí queda todo como lo dejaste.'],
+    respaldoIntro: ['Lo que hemos vivido está guardado solo aquí, en este teléfono. Si quieres, guarda una copia. Así no se pierde nada.'],
+    respaldoGuardado: ['Ya está. Guárdalo en algún lugar tranquilo. Con eso basta.'],
+    respaldoRecuperado: ['Volviste. Todo está donde lo dejaste.'],
+    respaldoRecordar: ['Hace un tiempo que no guardas una copia. Cuando puedas, sin apuro.'],
   },
 
   vesper: {
@@ -187,6 +203,10 @@ const VOCES: Record<CharacterId, Voz> = {
     cartasIntro: ['Con Plumas puedes reescribir el guion. Elige bien el tropo.'],
     sinPlumas: ['Faltan Plumas. Un acto de cinco minutos lo resuelve.'],
     parejaIntro: ['¿Cambiar de obra? Las demás también te esperan. Esta no se va a ninguna parte.'],
+    respaldoIntro: ['Toda la función está escrita solo en este teléfono. Un buen director siempre guarda una copia del libreto. Hágalo.'],
+    respaldoGuardado: ['Copia guardada. Consérvela fuera de escena: en un chat, en sus notas.'],
+    respaldoRecuperado: ['El telón vuelve a subir exactamente donde bajó. Bienvenida de vuelta.'],
+    respaldoRecordar: ['Hace tiempo que no respalda el libreto. Ningún teatro sobrevive sin copia.'],
   },
 };
 

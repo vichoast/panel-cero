@@ -16,28 +16,19 @@ import {
   Heart,
   Smiley,
   Notebook,
+  ShieldCheck,
 } from '@phosphor-icons/react';
-import { ShipId, ThemeMode, MicroMission, BLChapter, SceneChoice, SecretLog } from './types';
+import { ShipId, MicroMission, BLChapter, SceneChoice, SecretLog, SavedProgress } from './types';
 import { CHARACTERS, SHIPS, SECRET_LOGS, TROPE_CARDS, getOrGenerateChapter, HISTORIAS } from './data/content';
 import { claveSaludo, dice, guias, Linea } from './data/voces';
 import { CharacterPortrait } from './components/CharacterPortrait';
 import { MissionSheet } from './components/MissionSheet';
 import { MissionTimer } from './components/MissionTimer';
 import { StoryReader } from './components/StoryReader';
+import { Respaldo } from './components/Respaldo';
+import { pedirPersistencia } from './data/respaldo';
 import { Bocadillo, Hoja } from './ui/Bocadillo';
 
-interface SavedProgress {
-  activeShip: ShipId;
-  isShipLocked: boolean;
-  theme: ThemeMode;
-  plumas: number;
-  sessionsCompleted: number;
-  shipChemistry: Record<ShipId, number>;
-  shipChapterIndex: Record<ShipId, number>;
-  unlockedChapterHistory: BLChapter[];
-  // Opción elegida en cada capítulo (id del capítulo -> id de la opción). Evita sumar química dos veces.
-  choicesMade: Record<string, string>;
-}
 
 const DEFAULT_PROGRESS: SavedProgress = {
   activeShip: 'kazuha-renji',
@@ -98,6 +89,12 @@ export function App() {
   const [leyendo, setLeyendo] = useState<BLChapter | null>(null);
   const [secreto, setSecreto] = useState<SecretLog | null>(null);
   const [aviso, setAviso] = useState<Linea | null>(null);
+  const [hojaRespaldo, setHojaRespaldo] = useState<null | 'inicio' | 'recuperar'>(null);
+
+  // Pide al navegador que no borre estos datos por su cuenta (sobre todo en iPhone).
+  useEffect(() => {
+    pedirPersistencia();
+  }, []);
 
   useEffect(() => {
     try {
@@ -127,6 +124,17 @@ export function App() {
     [progress.unlockedChapterHistory, progress.activeShip]
   );
   const elegidas = Object.values(progress.choicesMade);
+  // Recordatorio de respaldo: con 3+ capítulos leídos y sin copia en los últimos 14 días.
+  const leidos = Object.values(progress.shipChapterIndex).reduce((a, b) => a + b, 0);
+  const diasSinRespaldo = progress.ultimoRespaldo ? (Date.now() - new Date(progress.ultimoRespaldo).getTime()) / 86_400_000 : Infinity;
+  const pideRespaldo = leidos >= 3 && diasSinRespaldo > 14;
+
+  const recuperar = (avance: Partial<SavedProgress>) => {
+    setProgress({ ...DEFAULT_PROGRESS, ...avance, isShipLocked: true });
+    setHojaPareja(false);
+    setPestana('hoy');
+    setAviso(null);
+  };
   const secretos = SECRET_LOGS.filter((l) => l.shipId === progress.activeShip);
 
   useEffect(() => setAviso(null), [progress.activeShip]);
@@ -208,6 +216,15 @@ export function App() {
             <span className="w-7 h-7 grid place-items-center rounded-lg bg-rose-500 font-editorial font-bold text-white text-base leading-none">0</span>
             <span className="text-[13px] font-semibold tracking-[0.2em] text-zinc-300">PANEL CERO</span>
           </div>
+          <div className="flex items-center gap-2">
+          <button
+            onClick={() => setHojaRespaldo('inicio')}
+            className="relative h-9 w-9 grid place-items-center rounded-full bg-white/[0.05] ring-1 ring-white/10 text-zinc-300"
+            aria-label="Respaldo de tu avance"
+          >
+            <ShieldCheck size={17} weight={pideRespaldo ? 'regular' : 'fill'} className={pideRespaldo ? 'text-amber-200' : 'text-zinc-400'} />
+            {pideRespaldo && <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-amber-300 ring-2 ring-[#0b0b0d]" />}
+          </button>
           <button
             onClick={() => setPestana('cartas')}
             className="h-9 px-3 rounded-full bg-white/[0.05] ring-1 ring-white/10 flex items-center gap-1.5 text-sm"
@@ -216,6 +233,7 @@ export function App() {
             <Feather size={15} weight="fill" className="text-rose-300" />
             <span className="font-mono-tech">{progress.plumas}</span>
           </button>
+          </div>
         </header>
 
         <AnimatePresence mode="wait">
@@ -292,6 +310,12 @@ export function App() {
                       })}
                     </div>
                   </section>
+                )}
+
+                {pideRespaldo && !aviso && (
+                  <button onClick={() => setHojaRespaldo('inicio')} className="w-full text-left">
+                    <Bocadillo char={otro} texto={dice(otro, guia, 'respaldoRecordar').texto} expresion="intense" lado="der" tam="sm" />
+                  </button>
                 )}
 
                 {/* Invitación del otro chico */}
@@ -523,8 +547,28 @@ export function App() {
               );
             })}
           </div>
+          {!progress.isShipLocked && (
+            <button
+              onClick={() => setHojaRespaldo('recuperar')}
+              className="w-full h-11 rounded-2xl text-sm text-zinc-400 hover:text-white flex items-center justify-center gap-2"
+            >
+              <ShieldCheck size={16} />
+              ¿Ya tenías avance en otro celular? Recupéralo
+            </button>
+          )}
         </div>
       </Hoja>
+
+      <Respaldo
+        abierta={!!hojaRespaldo}
+        inicial={hojaRespaldo ?? 'inicio'}
+        progress={progress}
+        guia={guia}
+        otro={otro}
+        onCerrar={() => setHojaRespaldo(null)}
+        onGuardado={() => setProgress((p) => ({ ...p, ultimoRespaldo: new Date().toISOString() }))}
+        onRecuperar={recuperar}
+      />
 
       <MissionSheet
         abierta={!!hojaMision}

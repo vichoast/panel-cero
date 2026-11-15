@@ -120,3 +120,20 @@ export interface MicroMission {
   whyItWorks: string;
   characterIntro: Record<CharacterId, string>;
 }
+
+// Todo el avance de ella. Se guarda en el navegador (localStorage 'panel_cero_v1')
+// y se puede exportar como código de respaldo (src/data/respaldo.ts).
+export interface SavedProgress {
+  activeShip: ShipId;
+  isShipLocked: boolean;
+  theme: ThemeMode;
+  plumas: number;
+  sessionsCompleted: number;
+  shipChemistry: Record<ShipId, number>;
+  shipChapterIndex: Record<ShipId, number>;
+  unlockedChapterHistory: BLChapter[];
+  // Opción elegida en cada capítulo (id del capítulo -> id de la opción). Evita sumar química dos veces.
+  choicesMade: Record<string, string>;
+  // Fecha (ISO) del último respaldo que guardó o recuperó.
+  ultimoRespaldo?: string;
+}
