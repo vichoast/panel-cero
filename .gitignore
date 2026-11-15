@@ -1,0 +1,4 @@
+node_modules
+dist
+*.zip
+panel_cero_auditoria_claude.md
