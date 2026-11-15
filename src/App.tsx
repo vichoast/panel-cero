@@ -43,6 +43,7 @@ import {
   SECRET_LOGS,
   TROPE_CARDS,
   getOrGenerateChapter,
+  HISTORIAS,
 } from './data/content';
 import { CharacterPortrait } from './components/CharacterPortrait';
 import { OverthinkingModal } from './components/OverthinkingModal';
@@ -122,6 +123,7 @@ export function App() {
   const [readingChapter, setReadingChapter] = useState<BLChapter | null>(null);
   const [activeRightTab, setActiveRightTab] = useState<'misiones' | 'tropos' | 'secretos'>('misiones');
   const [openedSecretLog, setOpenedSecretLog] = useState<SecretLog | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [selectedCharacterFilter, setSelectedCharacterFilter] = useState<CharacterId | 'all'>('all');
 
 
@@ -140,7 +142,16 @@ export function App() {
   const currentChapIdx = progress.shipChapterIndex[progress.activeShip] || 0;
 
   // Stage index (0 to 4) based on chemistry (0-100+)
-  const stageIndex = Math.min(4, Math.floor(currentChem / 22));
+  // Con temporada escrita, la etapa de la relación avanza por capítulos leídos (slow burn real);
+  // en las demás parejas sigue dependiendo de la química.
+  const temporada = HISTORIAS[progress.activeShip];
+  const seasonDone = !!temporada && currentChapIdx >= temporada.length;
+  const stageIndex = temporada
+    ? Math.min(4, Math.floor((currentChapIdx * 5) / temporada.length))
+    : Math.min(4, Math.floor(currentChem / 22));
+  // Los secretos de una temporada escrita se abren por capítulos leídos de esa pareja (sin spoilers).
+  const avanceSecretos = temporada ? currentChapIdx : progress.sessionsCompleted;
+  const unidadSecretos = temporada ? 'capítulo(s)' : 'bloque(s) de 5 min';
   const currentStageName = currentShip.stageNames[stageIndex];
 
   // Current Cliffhanger Chapter waiting to be unlocked
@@ -187,6 +198,20 @@ export function App() {
       spread: 60,
       origin: { y: 0.7 },
     });
+
+    // Temporada terminada: el bloque igual cuenta y paga Plumas extra, pero no hay capítulo nuevo que abrir.
+    if (seasonDone) {
+      setProgress((prev) => ({
+        ...prev,
+        isShipLocked: true,
+        plumas: prev.plumas + 30,
+        sessionsCompleted: prev.sessionsCompleted + 1,
+      }));
+      setNotice(
+        `¡Bloque completado! +30 Plumas. Ya leíste toda la Temporada 1 de ${charA.name} × ${charB.name}: mientras llega la 2, usa tus Plumas en una carta de tropo o sigue la historia de otra pareja.`
+      );
+      return;
+    }
 
     const chapterToUnlock = getOrGenerateChapter(
       progress.activeShip,
@@ -376,6 +401,18 @@ export function App() {
 
       {/* Main Split-Screen Asymmetric Workspace */}
       <main className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 md:py-8">
+        {notice && (
+          <div className="mb-5 p-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 text-sm flex items-start justify-between gap-3">
+            <p className="leading-relaxed">{notice}</p>
+            <button
+              onClick={() => setNotice(null)}
+              className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-xs font-semibold shrink-0 transition"
+            >
+              Entendido
+            </button>
+          </div>
+        )}
+
         {/* SHIP ROUTE STATUS OR INITIAL SHIP SELECTOR */}
         <section className="mb-7">
           {progress.isShipLocked ? (
@@ -664,7 +701,7 @@ export function App() {
                   <div className="flex items-center justify-between gap-2">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono-tech uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
                       <LockKey size={14} weight="fill" />
-                      Escena en Cliffhanger — {nextChapter.title}
+                      {seasonDone ? nextChapter.title : `Escena en Cliffhanger — ${nextChapter.title}`}
                     </span>
                     <span className="text-xs font-mono-tech text-zinc-400">
                       {nextChapter.tropeTag}
@@ -695,9 +732,17 @@ export function App() {
                   {/* Unlock Callout */}
                   <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-white/10 text-xs text-rose-200">
                     <p className="leading-relaxed">
-                      <strong>Cómo destrabar qué pasa ahora:</strong> Inicia cualquier micropaso de 3 a 5 minutos en{' '}
-                      <span className="underline">Mi Pieza</span> o{' '}
-                      <span className="underline">Universidad</span> en el panel derecho.
+                      {seasonDone ? (
+                        <>
+                          <strong>Temporada 1 completa.</strong> Cada micropaso que hagas suma 30 Plumas para cartas de tropo mientras llega la Temporada 2.
+                        </>
+                      ) : (
+                        <>
+                          <strong>Cómo destrabar qué pasa ahora:</strong> Inicia cualquier micropaso de 3 a 5 minutos en{' '}
+                          <span className="underline">Mi Pieza</span> o{' '}
+                          <span className="underline">Universidad</span> en el panel derecho.
+                        </>
+                      )}
                     </p>
                     <button
                       onClick={() =>
@@ -1159,7 +1204,7 @@ export function App() {
                   {currentShipSecretLogs.map(
                     (log) => {
                       const isUnlocked =
-                        progress.sessionsCompleted >= log.unlockRequirementSessions;
+                        avanceSecretos >= log.unlockRequirementSessions;
                       return (
                         <div
                           key={log.id}
@@ -1181,7 +1226,7 @@ export function App() {
                                 : 'Cuaderno de Bocetos'}
                             </span>
                             <span className="text-[11px] font-mono-tech text-zinc-500">
-                              Req: {log.unlockRequirementSessions} sesiones
+                              Req: {log.unlockRequirementSessions} {temporada ? 'capítulos' : 'sesiones'}
                             </span>
                           </div>
                           <h4 className="font-bold text-sm">{log.title}</h4>
@@ -1203,8 +1248,8 @@ export function App() {
                           ) : (
                             <div className="text-[11px] font-mono-tech text-zinc-500 pt-1">
                               Completa{' '}
-                              {log.unlockRequirementSessions - progress.sessionsCompleted}{' '}
-                              bloque(s) más de 5 min para desbloquear.
+                              {log.unlockRequirementSessions - avanceSecretos} {unidadSecretos} más para
+                              desbloquear.
                             </div>
                           )}
 
@@ -1287,6 +1332,7 @@ export function App() {
       <ChapterReaderModal
         key={readingChapter?.id || 'empty-reader'}
         chapter={readingChapter}
+        elegidas={Object.values(progress.choicesMade)}
         onClose={() => setReadingChapter(null)}
         onFinishChapter={handleFinishChapter}
       />

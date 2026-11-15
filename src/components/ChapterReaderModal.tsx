@@ -9,21 +9,27 @@ import {
   BookOpenText,
   ArrowCounterClockwise,
 } from '@phosphor-icons/react';
-import { BLChapter, SceneChoice } from '../types';
+import { BLChapter, DialogueBeat, SceneChoice } from '../types';
 import { CHARACTERS } from '../data/content';
 import { CharacterPortrait } from './CharacterPortrait';
 
 interface ChapterReaderModalProps {
   chapter: BLChapter | null;
+  // Ids de las opciones que ella ha elegido en capítulos anteriores (memoria de decisiones).
+  elegidas?: string[];
   onClose: () => void;
   onFinishChapter: (choice: SceneChoice) => void;
 }
 
 export const ChapterReaderModal: React.FC<ChapterReaderModalProps> = ({
   chapter,
+  elegidas = [],
   onClose,
   onFinishChapter,
 }) => {
+  const visible = (b: DialogueBeat) =>
+    (!b.si || elegidas.includes(b.si)) &&
+    (!b.siNinguna || !b.siNinguna.some((id) => elegidas.includes(id)));
   const [revealedThoughts, setRevealedThoughts] = useState<Record<string, boolean>>({});
   const [selectedChoice, setSelectedChoice] = useState<SceneChoice | null>(null);
 
@@ -104,7 +110,7 @@ export const ChapterReaderModal: React.FC<ChapterReaderModalProps> = ({
               {chapter.subtitle} — Toca cualquier cuadro con el ícono de ojo para leer lo que el personaje calla por dentro.
             </p>
 
-            {chapter.beats.map((beat, idx) => {
+            {chapter.beats.filter(visible).map((beat, idx) => {
               if (beat.speaker === 'narrator') {
                 return (
                   <motion.div
@@ -220,7 +226,7 @@ export const ChapterReaderModal: React.FC<ChapterReaderModalProps> = ({
                         {choice.label}
                       </span>
                       <span className="px-3 py-1 rounded-full text-xs font-mono-tech bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
-                        +{choice.chemistryDelta}% Tensión
+                        {choice.tone === 'tension' ? 'Tensión' : choice.tone === 'tierno' ? 'Ternura' : 'Caos'}
                       </span>
                     </button>
                   ))}
@@ -235,7 +241,7 @@ export const ChapterReaderModal: React.FC<ChapterReaderModalProps> = ({
                     <strong>Elegiste:</strong> {selectedChoice.label}
                   </div>
 
-                  {selectedChoice.followUpBeats.map((fb) => {
+                  {selectedChoice.followUpBeats.filter(visible).map((fb) => {
                     const char =
                       fb.speaker === 'narrator' ? null : CHARACTERS[fb.speaker];
                     return (
@@ -256,9 +262,18 @@ export const ChapterReaderModal: React.FC<ChapterReaderModalProps> = ({
                             </span>
                           </div>
                         )}
-                        <p className="text-base text-zinc-100 leading-relaxed">
-                          "{fb.spokenText}"
-                        </p>
+                        {char ? (
+                          <p className="text-base text-zinc-100 leading-relaxed">
+                            "{fb.spokenText}"
+                          </p>
+                        ) : (
+                          <p className="text-sm md:text-base font-editorial italic text-zinc-300 leading-relaxed">
+                            {fb.spokenText}
+                          </p>
+                        )}
+                        {fb.stageDirection && (
+                          <p className="text-xs text-zinc-400 italic">* {fb.stageDirection}</p>
+                        )}
                         {fb.hiddenThought && (
                           <p className="text-xs text-rose-200/90 font-editorial italic pt-1">
                             [Pensamiento oculto]: "{fb.hiddenThought}"

@@ -41,6 +41,10 @@ export interface DialogueBeat {
   spokenText: string;
   hiddenThought?: string; // Revealed when tapping/clicking the character or thought trigger
   stageDirection?: string;
+  // Memoria de decisiones: el cuadro solo aparece si ella eligió esa opción en un capítulo anterior...
+  si?: string;
+  // ...o si no eligió ninguna de estas.
+  siNinguna?: string[];
 }
 
 export interface SceneChoice {

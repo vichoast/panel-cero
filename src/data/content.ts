@@ -7,6 +7,11 @@ import {
   TropeCard,
   MicroMission,
 } from '../types';
+import {
+  TEMPORADA_KAZUHA_RENJI,
+  ESPERA_KAZUHA_RENJI,
+  SECRETOS_KAZUHA_RENJI,
+} from './historias/kazuha-renji';
 
 export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
   noctis: {
@@ -484,105 +489,6 @@ export const INITIAL_CHAPTERS: BLChapter[] = [
     nextCliffhangerTeaser: 'En el próximo episodio: Ordenando la ropa de la cama, el haori de Kazuha termina sobre los hombros de Noctis... y alguien pierde el equilibrio.',
   },
 
-  // ================= KAZUHA x RENJI =================
-  {
-    id: 'kr-ch1',
-    shipId: 'kazuha-renji',
-    chapterNumber: 1,
-    title: 'Episodio 01: La Taza de la Discordia y el Silencio Peligroso',
-    subtitle: 'Comedia romántica dosmilera: gritos primero, latidos después.',
-    contextTrigger: 'any',
-    tropeTag: 'Pelea Doméstica con Giro Romántico',
-    cliffhangerPreview: {
-      speakerA: 'kazuha',
-      lineA: '¡Si vuelves a dejar una caja vacía de leche de frutilla en mi mesa de dibujo, te juro que te lanzo por la ventana, Renji!',
-      speakerB: 'renji',
-      lineB: 'Oye, te ves demasiado lindo cuando se te erizan las orejas de rabia... acércate a repetírmelo.',
-      narratorHook: 'Renji atrapa la muñeca de Kazuha en el aire y le borra el enojo de golpe. Haz 5 minutos de arranque para ver la escena.',
-    },
-    beats: [
-      {
-        id: 'kr1-1',
-        speaker: 'narrator',
-        spokenText: 'El estudio parece un campo de batalla sacado de un anime del 2004. Kazuha sostiene un plumero en una mano y tres tazas rescatadas en la otra.',
-      },
-      {
-        id: 'kr1-2',
-        speaker: 'kazuha',
-        expression: 'intense',
-        spokenText: '¡Explicación inmediata! ¿Por qué hay tres bocetos arrugados, una cuchara y tu chaqueta encima de la silla donde teníamos que trabajar?',
-        hiddenThought: 'Y lo peor es que su chaqueta tiene su perfume y me distrae cada vez que paso al lado.',
-      },
-      {
-        id: 'kr1-3',
-        speaker: 'renji',
-        expression: 'smirk',
-        spokenText: 'Tranquilo, fiera. Se llama "caos creativo ambiental". Hasta en Gintama pasan medio capítulo mirando el techo antes de que empiece la trama.',
-        hiddenThought: 'En realidad dejé mi chaqueta ahí a propósito porque anoche vi que tenía frío en el estudio.',
-      },
-      {
-        id: 'kr1-4',
-        speaker: 'kazuha',
-        expression: 'blush',
-        spokenText: '¡No me cambies el tema con referencias absurdas! Toma tu ropa ahora mismo o...',
-        stageDirection: 'Kazuha intenta empujar la chaqueta contra el pecho de Renji, pero Renji no retrocede ni un milímetro: le sujeta la muñeca con firmeza y baja la voz.',
-      },
-      {
-        id: 'kr1-5',
-        speaker: 'renji',
-        expression: 'intense',
-        spokenText: 'Te la dejé a ti, Kazuha. Te quedaste dormido sobre la mesa a las tres de la mañana cuidando que todo estuviera en orden. ¿De verdad creías que no me daba cuenta?',
-        hiddenThought: 'Siempre cuida a todo el mundo y nadie lo cuida a él. Me vuelve loco cuando se queda sin palabras así.',
-      },
-    ],
-    choicePrompt: 'Kazuha se queda congelado con la cara roja hasta el cuello. ¿Cómo responde al cambio repentino de tono de Renji?',
-    choices: [
-      {
-        id: 'kr1-c1',
-        label: 'Desviar la mirada en completo modo tsundere pero apretar la chaqueta de Renji contra su pecho',
-        tone: 'tierno',
-        chemistryDelta: 30,
-        followUpBeats: [
-          {
-            id: 'kr1-c1-1',
-            speaker: 'kazuha',
-            expression: 'blush',
-            spokenText: '...¡N-no te pedí que hicieras eso, idiota! Y suéltame la muñeca, que todavía nos quedan cinco minutos de trabajo.',
-            hiddenThought: 'No quiero devolverle la chaqueta nunca más.',
-          },
-          {
-            id: 'kr1-c1-2',
-            speaker: 'renji',
-            expression: 'smirk',
-            spokenText: 'Tus palabras dicen "suéltame", pero tus orejas me están rozando la mejilla, zorrito.',
-          },
-        ],
-      },
-      {
-        id: 'kr1-c2',
-        label: 'Desafiar a Renji acercándose aún más para ver quién se pone nervioso primero',
-        tone: 'tension',
-        chemistryDelta: 25,
-        followUpBeats: [
-          {
-            id: 'kr1-c2-1',
-            speaker: 'kazuha',
-            expression: 'smirk',
-            spokenText: 'Mucho hablas para alguien a quien le está latiendo el pulso tan fuerte en la garganta, Renji.',
-          },
-          {
-            id: 'kr1-c2-2',
-            speaker: 'renji',
-            expression: 'blush',
-            spokenText: '...Okay, tiempo fuera. Si me miras así desde tan abajo voy a olvidar que estamos en horario de estudio.',
-            hiddenThought: 'Golpe crítico. Me ganó mi propio juego.',
-          },
-        ],
-      },
-    ],
-    nextCliffhangerTeaser: 'En el próximo episodio: Una apuesta por quién ordena más rápido en 5 minutos termina con los dos encerrados en el clóset.',
-  },
-
   // ================= VESPER x RENJI =================
   {
     id: 'vr-ch1',
@@ -690,11 +596,26 @@ export const INITIAL_CHAPTERS: BLChapter[] = [
 ];
 
 // Fallback generator for ships or chapters beyond the initial set so EVERY ship and EVERY level has deep, rich multi-beat scenes!
+// Parejas con temporada escrita a mano (cada una en su archivo de src/data/historias).
+// Para sumar una pareja o una temporada nueva basta con agregarla aquí.
+export const HISTORIAS: Partial<Record<ShipId, BLChapter[]>> = {
+  'kazuha-renji': TEMPORADA_KAZUHA_RENJI,
+};
+// Portada que se muestra cuando ya leyó todos los capítulos escritos de una pareja.
+const ESPERAS: Partial<Record<ShipId, BLChapter>> = {
+  'kazuha-renji': ESPERA_KAZUHA_RENJI,
+};
+
 export function getOrGenerateChapter(
   shipId: ShipId,
   chapterIndex: number,
   domain: 'pieza' | 'universidad'
 ): BLChapter {
+  const escrita = HISTORIAS[shipId];
+  if (escrita) {
+    return escrita[chapterIndex] ?? ESPERAS[shipId] ?? escrita[escrita.length - 1];
+  }
+
   const existingForShip = INITIAL_CHAPTERS.filter((c) => c.shipId === shipId);
   if (existingForShip[chapterIndex]) {
     return existingForShip[chapterIndex];
@@ -861,6 +782,7 @@ export function getOrGenerateChapter(
 
 // ================= SECRET 3 AM CHATS & SKETCHBOOK LOGS =================
 export const SECRET_LOGS: SecretLog[] = [
+  ...SECRETOS_KAZUHA_RENJI,
   {
     id: 'log-nv-chat1',
     shipId: 'noctis-vesper',
@@ -910,33 +832,6 @@ export const SECRET_LOGS: SecretLog[] = [
         'Siempre entra gruñendo que soy un desastre y que mi pieza lo estresa, pero esperó hasta creer que yo estaba dormido para arroparme y sacarme el lápiz de la mano sin despertarme.',
       marginNote: 'Nota al margen: Si se despierta y ve que le dibujé las pestañas tan de cerca, me va a gritar durante una hora (con la cara completamente roja).',
     },
-  },
-  {
-    id: 'log-kr-chat1',
-    shipId: 'kazuha-renji',
-    title: 'Chat Oculto — 02:50 AM: "Mi chaqueta"',
-    unlockRequirementSessions: 2,
-    type: 'chat-3am',
-    summary: 'Mensajes nocturnos después de discutir todo el día en el taller.',
-    chatMessages: [
-      {
-        sender: 'renji',
-        time: '02:48 AM',
-        text: 'Oye, zorrito. Te llevaste mi chaqueta puesta a tu cuarto otra vez.',
-      },
-      {
-        sender: 'kazuha',
-        time: '02:49 AM',
-        text: '¡¡Fue por accidente!! Estaba encima de mis cosas y la tomé sin mirar. Mañana te la tiro a la cara.',
-        deletedDraft: 'Huele a ti y me ayuda a dormir cuando estoy estresado.',
-      },
-      {
-        sender: 'renji',
-        time: '02:51 AM',
-        text: 'Jajaja quédatela. Dejé una barra de chocolate en el bolsillo izquierdo para cuando termines de ordenar.',
-        deletedDraft: 'Te queda mejor a ti que a mí de todas formas.',
-      },
-    ],
   },
   {
     id: 'log-vr-sketch1',
