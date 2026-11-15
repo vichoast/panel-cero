@@ -143,7 +143,7 @@ export const SHIPS: Record<ShipId, ShipMetadata> = {
     title: 'El Cuarto Acto Improvisado',
     tropeHeadline: 'El Intocable con Máscara × El Único que le Arruina el Guion',
     synopsis:
-      'Vesper controla cada centímetro de su espacio personal. Renji invade ese espacio con una caja de leche de frutilla y la mirada peligrosamente fija en los labios visibles bajo la máscara.',
+      'Vesper dirige una obra donde hasta los suspiros están cronometrados. Renji, el animador contratado, le dibuja monigotes en el libreto y no ha seguido un guion en su vida.',
     stageNames: [
       'I. Guion Saboteado',
       'II. Distancia Ilegal',
