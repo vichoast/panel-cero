@@ -1,6 +1,35 @@
 import React from 'react';
 import { CharacterId } from '../types';
 
+// Arte dibujado a mano. Coordenadas en píxeles de la imagen original.
+//   cara: recorte cuadrado para los retratos chicos (globos de diálogo, listas).
+//   cuerpo: recorte 5:6 para los retratos grandes (lector, presentación).
+//   mejillas: [x, y, giro] donde va el sonrojo, dibujado con código.
+interface Arte {
+  src: string;
+  ancho: number;
+  alto: number;
+  fondo: string;
+  cara: [number, number, number, number];
+  cuerpo: [number, number, number, number];
+  mejillas: [number, number, number][];
+}
+
+const ARTE: Partial<Record<CharacterId, Arte>> = {
+  kazuha: {
+    src: './arte/kazuha.webp',
+    ancho: 1818,
+    alto: 2000,
+    fondo: '#dedede',
+    cara: [360, 260, 1100, 1100],
+    cuerpo: [160, 0, 1500, 1800],
+    mejillas: [
+      [655, 915, -8],
+      [1080, 895, 8],
+    ],
+  },
+};
+
 interface CharacterPortraitProps {
   characterId: CharacterId;
   expression?: 'neutral' | 'blush' | 'intense' | 'smirk' | 'look-away' | 'shock';
@@ -26,6 +55,39 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
   const isBlushing = expression === 'blush' || expression === 'shock';
   const isIntense = expression === 'intense';
+
+  // Personajes con arte dibujado a mano (boceto de prueba). Se usa en vez del dibujo vectorial.
+  const arte = ARTE[characterId];
+  if (arte) {
+    const cuadrado = size === 'xs' || size === 'sm' || size === 'md';
+    const [x, y, w, h] = cuadrado ? arte.cara : arte.cuerpo;
+    return (
+      <div className={`relative overflow-hidden select-none shrink-0 ${dimensions} ${className}`} aria-label={`Retrato de ${characterId}`}>
+        <svg viewBox={`${x} ${y} ${w} ${h}`} preserveAspectRatio="xMidYMid slice" className="w-full h-full block" style={{ background: arte.fondo }}>
+          <image href={arte.src} x="0" y="0" width={arte.ancho} height={arte.alto} />
+          {isBlushing && (
+            <g style={{ mixBlendMode: 'multiply' }}>
+              <defs>
+                <radialGradient id={`rubor-${characterId}`}>
+                  <stop offset="0%" stopColor="#f07a93" stopOpacity="0.75" />
+                  <stop offset="60%" stopColor="#f39aac" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#f6b3c0" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              {arte.mejillas.map(([cx, cy, rot], k) => (
+                <g key={k} transform={`rotate(${rot} ${cx} ${cy})`}>
+                  <ellipse cx={cx} cy={cy} rx={expression === 'shock' ? 105 : 95} ry={44} fill={`url(#rubor-${characterId})`} />
+                  {[-32, 0, 32].map((dx) => (
+                    <line key={dx} x1={cx + dx - 9} y1={cy + 14} x2={cx + dx + 9} y2={cy - 14} stroke="#d9546f" strokeWidth={5} strokeLinecap="round" opacity={0.7} />
+                  ))}
+                </g>
+              ))}
+            </g>
+          )}
+        </svg>
+      </div>
+    );
+  }
 
   return (
     <div
